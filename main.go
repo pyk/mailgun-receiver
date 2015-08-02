@@ -23,12 +23,41 @@ func HandleIndex(w http.ResponseWriter, r *http.Request) {
 // HandleReceive handles incoming POST request to "/receive". Each incoming
 // email handled by custom logic based on request parameter.
 func HandleReceive(w http.ResponseWriter, r *http.Request) {
-	rbody := bufio.NewReader(r.Body)
-	_, err := rbody.WriteTo(os.Stdin)
-	if err != nil {
-		http.Error(w, "failed to write request body", http.StatusInternalServerError)
+	// parse data form POST request
+	if r.Form == nil {
+		err := r.ParseForm()
+		if err != nil {
+			fmt.Println("error:", err)
+			http.Error(w, "error: parse form", http.StatusInternalServerError)
+			return
+		}
 	}
-	fmt.Fprintf(os.Stdin, "%s", "\n")
+
+	// create a new file
+	f, err := os.Create(r.FormValue("token"))
+	if err != nil {
+		fmt.Println("error:", err)
+		http.Error(w, "error: create a new file", http.StatusInternalServerError)
+		return
+	}
+	// write POST data to a file
+	wrt := bufio.NewWriter(f)
+	for k, values := range r.Form {
+		for _, v := range values {
+			_, err := wrt.WriteString(fmt.Sprintf("%s: %s\n", k, v))
+			if err != nil {
+				fmt.Println("error:", err)
+				http.Error(w, "error: write to a file", http.StatusInternalServerError)
+				return
+			}
+		}
+	}
+	err = wrt.Flush()
+	if err != nil {
+		fmt.Println("error:", err)
+		http.Error(w, "error: flushing buffer", http.StatusInternalServerError)
+		return
+	}
 }
 
 func main() {
