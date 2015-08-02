@@ -23,20 +23,10 @@ func HandleIndex(w http.ResponseWriter, r *http.Request) {
 // HandleReceive handles incoming POST request to "/receive". Each incoming
 // email handled by custom logic based on request parameter.
 func HandleReceive(w http.ResponseWriter, r *http.Request) {
-	// parse data form POST request
-	if r.Form == nil {
-		err := r.ParseForm()
-		if err != nil {
-			fmt.Println("error:", err)
-			http.Error(w, "error: parse form", http.StatusInternalServerError)
-			return
-		}
-	}
-
 	// create a new file
 	f, err := os.Create(r.FormValue("token"))
 	if err != nil {
-		fmt.Println("error:", err)
+		fmt.Println(err)
 		http.Error(w, "error: create a new file", http.StatusInternalServerError)
 		return
 	}
@@ -46,7 +36,7 @@ func HandleReceive(w http.ResponseWriter, r *http.Request) {
 		for _, v := range values {
 			_, err := wrt.WriteString(fmt.Sprintf("%s: %s\n", k, v))
 			if err != nil {
-				fmt.Println("error:", err)
+				fmt.Println(err)
 				http.Error(w, "error: write to a file", http.StatusInternalServerError)
 				return
 			}
@@ -54,7 +44,7 @@ func HandleReceive(w http.ResponseWriter, r *http.Request) {
 	}
 	err = wrt.Flush()
 	if err != nil {
-		fmt.Println("error:", err)
+		fmt.Println(err)
 		http.Error(w, "error: flushing buffer", http.StatusInternalServerError)
 		return
 	}
